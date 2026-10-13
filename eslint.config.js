@@ -14,12 +14,9 @@ export default defineConfig(
     languageOptions: { globals: globals.node },
     rules: {
       // parametros e variáveis que iniciam com _ podem ficar sem uso
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
 
-  prettier,
+  prettier
 );
