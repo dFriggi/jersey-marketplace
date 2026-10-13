@@ -8,6 +8,28 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@jersey/shared": "*"
+    "@agendajs/mongo-backend": "^4.0.3",
+    "@jersey/shared": "*",
+    "agenda": "^6.2.6",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "jose": "^6.2.12",
+    "mongoose": "^9.11.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/supertest": "^7.2.1",
+    "mongodb": "^7.7.0",
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.4"
   }
 }
