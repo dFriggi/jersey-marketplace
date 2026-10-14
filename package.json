@@ -8,6 +8,8 @@
     "server"
   ],
   "scripts": {
+    "db": "npm run db --workspace server",
+    "db:stop": "npm run db:stop --workspace server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

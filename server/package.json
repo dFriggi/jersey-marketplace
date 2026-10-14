@@ -5,6 +5,8 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
+    "db": "tsx scripts/dev-db.ts",
+    "db:stop": "tsx scripts/dev-db-stop.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
