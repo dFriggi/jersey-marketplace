@@ -7,7 +7,9 @@
   "scripts": {
     "db": "tsx scripts/dev-db.ts",
     "db:stop": "tsx scripts/dev-db-stop.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@agendajs/mongo-backend": "^4.0.3",

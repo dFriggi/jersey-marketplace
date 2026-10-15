@@ -39,3 +39,6 @@ jobs:
 
       - name: Tipos (TypeScript)
         run: npm run typecheck
+
+      - name: Testes (Vitest)
+        run: npm test
