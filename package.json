@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
