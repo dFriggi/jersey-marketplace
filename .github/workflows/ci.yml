@@ -28,6 +28,12 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Cache do binário do MongoDB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Instala as dependências
         run: npm ci
 
