@@ -3,13 +3,15 @@ import mongoose from "mongoose";
 import { afterAll, afterEach, beforeAll, inject } from "vitest";
 import { resetClock } from "../../src/core/clock";
 import { connectDatabase, disconnectDatabase } from "../../src/core/database/connection";
+import { syncIndexes } from "../../src/core/database/sync-indexes";
 
 // liga um banco exclusivo para o arquivo de teste
 
 export function useTestDatabase() {
-  // conecta num banco com nome aleatório
+  // conecta num banco com nome aleatório e cria as collections e índices dos models já importados
   beforeAll(async () => {
     await connectDatabase(inject("mongoUri"), { dbName: `test_${randomUUID().slice(0, 8)}` });
+    await syncIndexes();
   });
 
   // limpa todas as collections depois de cada teste
