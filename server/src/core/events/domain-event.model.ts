@@ -1,4 +1,4 @@
-import { model, models, Schema, type Model } from "mongoose";
+import mongoose, { model, Schema, type Model } from "mongoose";
 
 export const DOMAIN_EVENT_STATUSES = ["PENDING", "PROCESSED", "FAILED"] as const;
 export type DomainEventStatus = (typeof DOMAIN_EVENT_STATUSES)[number];
@@ -33,4 +33,4 @@ const DomainEventSchema = new Schema<DomainEventDoc>(
 DomainEventSchema.index({ status: 1, occurredAt: 1 });
 
 export const DomainEventModel: Model<DomainEventDoc> =
-  (models.DomainEvent as Model<DomainEventDoc>) ?? model<DomainEventDoc>("DomainEvent", DomainEventSchema);
+  (mongoose.models.DomainEvent as Model<DomainEventDoc>) ?? model<DomainEventDoc>("DomainEvent", DomainEventSchema);

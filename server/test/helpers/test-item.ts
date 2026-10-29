@@ -1,4 +1,4 @@
-import { model, models, Schema, type Model } from "mongoose";
+import mongoose, { model, Schema, type Model } from "mongoose";
 
 //model usado somente nos testes para provar o comportamento do core
 export interface TestItemDoc {
@@ -22,4 +22,4 @@ const TestItemSchema = new Schema<TestItemDoc>(
 TestItemSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { open: true } });
 
 export const TestItemModel: Model<TestItemDoc> =
-  (models.TestItem as Model<TestItemDoc>) ?? model<TestItemDoc>("TestItem", TestItemSchema);
+  (mongoose.models.TestItem as Model<TestItemDoc>) ?? model<TestItemDoc>("TestItem", TestItemSchema);
