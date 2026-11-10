@@ -5,6 +5,12 @@ import { syncIndexes } from "./core/database/sync-indexes";
 
 // models precisam ser importados aqui para o syncIndexes criar os indices deles
 import "./core/events/domain-event.model";
+import "./modules/catalog/listing.model";
+import "./modules/catalog/shirt.model";
+import "./modules/catalog/wish.model";
+import "./modules/wallet/account.model";
+import "./modules/wallet/hold.model";
+import "./modules/wallet/ledger-entry.model";
 
 const config = loadConfig();
 
