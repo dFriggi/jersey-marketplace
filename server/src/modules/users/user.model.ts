@@ -1,7 +1,5 @@
 import mongoose, { model, Schema, type Model } from "mongoose";
-
-export const USER_ROLES = ["USER", "MEDIATOR"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
+import { USER_ROLES, type UserRole } from "./user.types";
 
 export interface UserDoc {
   name: string;
