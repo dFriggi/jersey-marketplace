@@ -2,7 +2,7 @@ import { z } from "zod";
 import { DomainError } from "../errors";
 
 // mensagens de erro do zod em português
-z.config(z.locales.pt());
+z.config(z.locales.ptBR());
 
 /* confere a entrada contra o schema. se estiver certa, devolve os dados tipados e sem os campos que o schema não conhece.
 se não, lança domain error validation com a lista dos problemas*/
