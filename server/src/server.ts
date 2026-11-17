@@ -11,6 +11,7 @@ import "./modules/catalog/wish.model";
 import "./modules/wallet/account.model";
 import "./modules/wallet/hold.model";
 import "./modules/wallet/ledger-entry.model";
+import "./modules/users/user.model";
 
 const config = loadConfig();
 
