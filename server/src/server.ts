@@ -12,6 +12,7 @@ import "./modules/wallet/account.model";
 import "./modules/wallet/hold.model";
 import "./modules/wallet/ledger-entry.model";
 import "./modules/users/user.model";
+import "./modules/trading/proposal.model";
 
 const config = loadConfig();
 
