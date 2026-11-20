@@ -72,3 +72,34 @@ export function decideRelease(hold: Pick<Hold, "userId" | "amountCents" | "statu
 
   throw invalidTransition("hold", hold.status, "RELEASED");
 }
+
+// RN-W06: só retenção ACTIVE vai para o escrow; o valor sai do retido de quem pagou
+export function escrowJournal(hold: Pick<Hold, "userId" | "amountCents" | "status">): Journal {
+  if (hold.status !== "ACTIVE") throw invalidTransition("hold", hold.status, "IN_ESCROW");
+
+  return balancedJournal("TO_ESCROW", [
+    { account: heldAccount(hold.userId), amountCents: -hold.amountCents },
+    { account: ESCROW_ACCOUNT, amountCents: hold.amountCents },
+  ]);
+}
+
+export interface SettleDecision {
+  beneficiaryId: string;
+  journal: Journal;
+}
+
+// RN-W07: só retenção IN_ESCROW é liquidada; o valor sai do escrow para o disponível do beneficiário
+export function decideSettle(hold: Pick<Hold, "amountCents" | "status" | "beneficiaryId">): SettleDecision {
+  if (hold.status !== "IN_ESCROW") throw invalidTransition("hold", hold.status, "SETTLED");
+
+  // o moveToEscrow sempre grava o beneficiário; faltar aqui é dado corrompido
+  if (!hold.beneficiaryId) throw new Error("Retenção no escrow sem beneficiário");
+
+  return {
+    beneficiaryId: hold.beneficiaryId,
+    journal: balancedJournal("SETTLE", [
+      { account: ESCROW_ACCOUNT, amountCents: -hold.amountCents },
+      { account: availableAccount(hold.beneficiaryId), amountCents: hold.amountCents },
+    ]),
+  };
+}

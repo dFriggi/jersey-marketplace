@@ -39,6 +39,29 @@ export class AccountRepository extends BaseRepository<AccountDoc, Account> {
     );
   }
 
+  // sai do retido (vai para o escrow); null quando o retido não cobre o valor ou a carteira não existe
+  removeHeld(userId: string, amountCents: number): Promise<Account | null> {
+    return this.compareAndSet(
+      { userId: new Types.ObjectId(userId), heldCents: { $gte: amountCents } },
+      { $inc: { heldCents: -amountCents, version: 1 } }
+    );
+  }
+
+  // entra dinheiro no disponível; cria a carteira se o usuário ainda não tiver (primeiro recebimento)
+  async creditAvailableCreating(userId: string, amountCents: number): Promise<Account> {
+    const doc = await this.model
+      .findOneAndUpdate(
+        { userId: new Types.ObjectId(userId) },
+        { $inc: { availableCents: amountCents, version: 1 } },
+        { upsert: true, setDefaultsOnInsert: true, returnDocument: "after", session: this.session }
+      )
+      .lean<DatabaseDoc<AccountDoc>>();
+
+    // com upsert o documento sempre existe depois da operação
+    if (!doc) throw new Error(`Carteira de ${userId} não foi criada`);
+    return this.toEntity(doc);
+  }
+
   // entra dinheiro no disponível (estorno do escrow); null quando a carteira não existe
   async creditAvailable(userId: string, amountCents: number): Promise<Account | null> {
     if (!Types.ObjectId.isValid(userId)) return null;
