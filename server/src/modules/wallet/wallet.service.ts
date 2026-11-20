@@ -2,8 +2,9 @@ import { runInTransaction } from "../../core/database/transaction";
 import { DomainError, invalidTransition } from "../../core/errors";
 import { AccountRepository } from "./account.repository";
 import { HoldRepository } from "./hold.repository";
-import { LedgerRepository } from "./ledger.repository";
-import { decideRelease, holdJournal } from "./ledger.rules";
+import { LedgerRepository, type LedgerRefs } from "./ledger.repository";
+import { decideRelease, decideSettle, escrowJournal, holdJournal } from "./ledger.rules";
+import type { Hold } from "./wallet.types";
 
 const accounts = new AccountRepository();
 const holds = new HoldRepository();
@@ -38,9 +39,7 @@ export async function hold(input: HoldInput): Promise<{ holdId: string }> {
 // ACTIVE -> RELEASED devolve o retido (RELEASE); IN_ESCROW -> RELEASED devolve do escrow (REFUND)
 export async function release(holdId: string): Promise<void> {
   await runInTransaction(async () => {
-    const current = await holds.findById(holdId);
-    if (!current) throw new DomainError("not_found", "hold_not_found", "Retenção não encontrada", { holdId });
-
+    const current = await findHoldOrFail(holdId);
     const decision = decideRelease(current);
 
     // compare-and-set: se outra chamada liberou antes, esta perde
@@ -54,10 +53,52 @@ export async function release(holdId: string): Promise<void> {
     // a retenção existe, então a carteira e o retido também deveriam existir
     if (!account) throw new Error(`Carteira de ${current.userId} não confere com a retenção ${current.id}`);
 
-    await ledger.append(decision.journal, {
-      holdId: current.id,
-      proposalId: current.reason.type === "PROPOSAL" ? current.reason.refId : undefined,
-      dealId: current.dealId,
-    });
+    await ledger.append(decision.journal, refsOf(current));
   });
+}
+
+// ACTIVE -> IN_ESCROW: o valor sai do retido de quem pagou e fica guardado até o negócio terminar
+export async function moveToEscrow(input: { holdId: string; dealId: string; beneficiaryId: string }): Promise<void> {
+  await runInTransaction(async () => {
+    const current = await findHoldOrFail(input.holdId);
+    const journal = escrowJournal(current);
+
+    const moved = await holds.markInEscrow(current.id, input.dealId, input.beneficiaryId);
+    if (!moved) throw invalidTransition("hold", current.status, "IN_ESCROW");
+
+    const account = await accounts.removeHeld(current.userId, current.amountCents);
+    if (!account) throw new Error(`Carteira de ${current.userId} não confere com a retenção ${current.id}`);
+
+    await ledger.append(journal, refsOf(moved));
+  });
+}
+
+// IN_ESCROW -> SETTLED: o valor sai do escrow para o disponível do beneficiário (cria a carteira se faltar)
+export async function settle(holdId: string): Promise<void> {
+  await runInTransaction(async () => {
+    const current = await findHoldOrFail(holdId);
+    const decision = decideSettle(current);
+
+    const settled = await holds.markSettled(current.id);
+    if (!settled) throw invalidTransition("hold", current.status, "SETTLED");
+
+    await accounts.creditAvailableCreating(decision.beneficiaryId, current.amountCents);
+    await ledger.append(decision.journal, refsOf(current));
+  });
+}
+
+async function findHoldOrFail(holdId: string): Promise<Hold> {
+  const found = await holds.findById(holdId);
+  if (!found) throw new DomainError("not_found", "hold_not_found", "Retenção não encontrada", { holdId });
+
+  return found;
+}
+
+// referências gravadas em cada linha do ledger, para o extrato saber de onde veio o dinheiro
+function refsOf(current: Hold): LedgerRefs {
+  return {
+    holdId: current.id,
+    proposalId: current.reason.type === "PROPOSAL" ? current.reason.refId : undefined,
+    dealId: current.dealId,
+  };
 }
