@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { BaseRepository, type DatabaseDoc } from "../../core/repository/base.repository";
 import type { ShirtSummary } from "./catalog.types";
 import { ShirtModel, type ShirtDoc } from "./shirt.model";
@@ -19,5 +20,25 @@ export class ShirtRepository extends BaseRepository<ShirtDoc, ShirtSummary> {
       openToTrade: doc.openToTrade,
       state: doc.state,
     };
+  }
+
+  // FREE -> RESERVED só se a camisa ainda estiver livre e com o dono esperado; null quando não está
+  async reserveIfFree(shirtId: string, ownerId: string): Promise<ShirtSummary | null> {
+    if (!Types.ObjectId.isValid(shirtId) || !Types.ObjectId.isValid(ownerId)) return null;
+
+    return this.compareAndSet(
+      { _id: new Types.ObjectId(shirtId), ownerId: new Types.ObjectId(ownerId), state: "FREE" },
+      { $set: { state: "RESERVED" }, $inc: { version: 1 } }
+    );
+  }
+
+  // RESERVED -> FREE; null quando a camisa não está reservada (ou não existe)
+  async releaseIfReserved(shirtId: string): Promise<ShirtSummary | null> {
+    if (!Types.ObjectId.isValid(shirtId)) return null;
+
+    return this.compareAndSet(
+      { _id: new Types.ObjectId(shirtId), state: "RESERVED" },
+      { $set: { state: "FREE" }, $inc: { version: 1 } }
+    );
   }
 }
