@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { BaseRepository, type DatabaseDoc } from "../../core/repository/base.repository";
+import type { OwnerEntry } from "./catalog.rules";
 import type { ShirtSummary } from "./catalog.types";
 import { ShirtModel, type ShirtDoc } from "./shirt.model";
 
@@ -29,6 +30,26 @@ export class ShirtRepository extends BaseRepository<ShirtDoc, ShirtSummary> {
     return this.compareAndSet(
       { _id: new Types.ObjectId(shirtId), ownerId: new Types.ObjectId(ownerId), state: "FREE" },
       { $set: { state: "RESERVED" }, $inc: { version: 1 } }
+    );
+  }
+
+  // RESERVED -> FREE com o novo dono, fechada para troca e com a entrada nova na procedência
+  // null quando a camisa não está mais reservada
+  transferIfReserved(shirtId: string, entry: OwnerEntry): Promise<ShirtSummary | null> {
+    return this.compareAndSet(
+      { _id: new Types.ObjectId(shirtId), state: "RESERVED" },
+      {
+        $set: { ownerId: new Types.ObjectId(entry.userId), state: "FREE", openToTrade: false },
+        $push: {
+          ownerHistory: {
+            userId: new Types.ObjectId(entry.userId),
+            acquiredAt: entry.acquiredAt,
+            via: entry.via,
+            dealId: new Types.ObjectId(entry.dealId),
+          },
+        },
+        $inc: { version: 1 },
+      }
     );
   }
 

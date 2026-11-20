@@ -1,5 +1,7 @@
+import { clock } from "../../core/clock";
 import { runInTransaction } from "../../core/database/transaction";
 import { DomainError, invalidTransition } from "../../core/errors";
+import { decideTransfer, type TransferInput } from "./catalog.rules";
 import type { ActiveSaleListing, ShirtSummary } from "./catalog.types";
 import { ListingRepository } from "./listing.repository";
 import { ShirtRepository } from "./shirt.repository";
@@ -45,6 +47,26 @@ export async function reserveShirts(items: { shirtId: string; ownerId: string }[
 
       await listings.reserveActive(shirtId);
     }
+  });
+}
+
+// RN-C04: a camisa RESERVED passa para o novo dono, volta a FREE e fica fechada para troca
+// o anúncio RESERVED dela, se houver, fecha como vendido (CLOSED, SOLD) com o negócio e a data
+export async function transferShirt(input: { shirtId: string } & TransferInput): Promise<void> {
+  await runInTransaction(async () => {
+    const current = await shirts.findById(input.shirtId);
+
+    if (!current) {
+      throw new DomainError("not_found", "shirt_not_found", "Camisa não encontrada", { ids: [input.shirtId] });
+    }
+
+    const entry = decideTransfer(current, input, clock.now());
+
+    // compare-and-set: se outra chamada mexeu na camisa depois da leitura, esta perde
+    const transferred = await shirts.transferIfReserved(current.id, entry);
+    if (!transferred) throw invalidTransition("shirt", current.state, "FREE");
+
+    await listings.closeReservedAsSold(current.id, input.dealId, entry.acquiredAt);
   });
 }
 
