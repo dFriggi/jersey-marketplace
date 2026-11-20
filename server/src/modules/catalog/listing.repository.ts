@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { BaseRepository, type DatabaseDoc } from "../../core/repository/base.repository";
+import { BaseRepository, type DatabaseDoc, type Page, type PageRequest } from "../../core/repository/base.repository";
 import type { Listing } from "./catalog.types";
 import { ListingModel, type ListingDoc } from "./listing.model";
 
@@ -17,6 +17,7 @@ export class ListingRepository extends BaseRepository<ListingDoc, Listing> {
       priceCents: doc.priceCents,
       status: doc.status,
       open: doc.open,
+      snapshot: { condition: doc.snapshot.condition, photos: doc.snapshot.photos },
       createdAt: doc.createdAt,
     };
   }
@@ -31,5 +32,12 @@ export class ListingRepository extends BaseRepository<ListingDoc, Listing> {
     );
 
     return listing ?? null;
+  }
+
+  // anúncios de venda ACTIVE, mais novos primeiro; shirtIds restringe a essas camisas
+  paginateActiveSales(shirtIds: string[] | undefined, request: Omit<PageRequest, "sort">): Promise<Page<Listing>> {
+    const onlyShirts = shirtIds ? { shirtId: { $in: shirtIds.map((id) => new Types.ObjectId(id)) } } : {};
+
+    return this.paginate({ type: "SALE", status: "ACTIVE", ...onlyShirts }, { ...request, sort: { createdAt: -1 } });
   }
 }

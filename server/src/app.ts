@@ -1,5 +1,6 @@
 import express from "express";
 import { errorHandler } from "./core/http/error-handler";
+import { catalogRouter } from "./modules/catalog";
 import { usersRouter } from "./modules/users";
 
 export function createApp() {
@@ -12,6 +13,7 @@ export function createApp() {
   });
 
   app.use(usersRouter);
+  app.use(catalogRouter);
 
   app.use(errorHandler);
 
