@@ -1,5 +1,6 @@
 import { DomainError } from "../../core/errors";
-import type { ActiveSaleListing, ShirtSummary } from "./catalog.types";
+import type { Page } from "../../core/repository/base.repository";
+import type { ActiveSaleListing, ShirtSummary, ShowcaseItem, ShowcaseQuery } from "./catalog.types";
 import { ListingRepository } from "./listing.repository";
 import { ShirtRepository } from "./shirt.repository";
 
@@ -28,4 +29,36 @@ export async function getActiveSaleListing(shirtId: string): Promise<ActiveSaleL
   if (listing.priceCents === undefined) throw new Error(`Anúncio de venda ${listing.id} sem preço`);
 
   return { id: listing.id, sellerId: listing.sellerId, priceCents: listing.priceCents };
+}
+
+// vitrine: anúncios de venda ativos, mais novos primeiro, com os dados da camisa
+export async function listShowcase(query: ShowcaseQuery): Promise<Page<ShowcaseItem>> {
+  const filtersShirts = query.team !== undefined || query.size !== undefined;
+  const shirtIds = filtersShirts ? await shirts.findIdsMatching(query) : undefined;
+
+  const page = await listings.paginateActiveSales(shirtIds, { page: query.page, size: query.pageSize });
+  const pageShirts = await shirts.findByIds(page.docs.map((listing) => listing.shirtId));
+  const shirtsById = new Map(pageShirts.map((shirt) => [shirt.id, shirt]));
+
+  const docs = page.docs.flatMap((listing) => {
+    const shirt = shirtsById.get(listing.shirtId);
+    if (!shirt || listing.priceCents === undefined) return [];
+
+    return [
+      {
+        id: listing.id,
+        shirtId: listing.shirtId,
+        sellerId: listing.sellerId,
+        priceCents: listing.priceCents,
+        team: shirt.team,
+        season: shirt.season,
+        size: shirt.size,
+        condition: listing.snapshot.condition,
+        photos: listing.snapshot.photos,
+        createdAt: listing.createdAt,
+      },
+    ];
+  });
+
+  return { ...page, docs };
 }
