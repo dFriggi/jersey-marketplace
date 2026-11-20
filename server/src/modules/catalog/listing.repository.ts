@@ -32,4 +32,20 @@ export class ListingRepository extends BaseRepository<ListingDoc, Listing> {
 
     return listing ?? null;
   }
+
+  // ACTIVE -> RESERVED no anúncio da camisa, se houver; null quando não há anúncio ativo
+  reserveActive(shirtId: string): Promise<Listing | null> {
+    return this.compareAndSet(
+      { shirtId: new Types.ObjectId(shirtId), status: "ACTIVE" },
+      { $set: { status: "RESERVED" }, $inc: { version: 1 } }
+    );
+  }
+
+  // RESERVED -> ACTIVE no anúncio da camisa, se houver; null quando não há anúncio reservado
+  reactivateReserved(shirtId: string): Promise<Listing | null> {
+    return this.compareAndSet(
+      { shirtId: new Types.ObjectId(shirtId), status: "RESERVED" },
+      { $set: { status: "ACTIVE" }, $inc: { version: 1 } }
+    );
+  }
 }
