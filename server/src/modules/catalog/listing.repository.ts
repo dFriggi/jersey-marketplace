@@ -41,6 +41,23 @@ export class ListingRepository extends BaseRepository<ListingDoc, Listing> {
     );
   }
 
+  // RESERVED -> CLOSED (vendido) no anúncio da camisa, se houver; null quando não há anúncio reservado
+  closeReservedAsSold(shirtId: string, dealId: string, closedAt: Date): Promise<Listing | null> {
+    return this.compareAndSet(
+      { shirtId: new Types.ObjectId(shirtId), status: "RESERVED" },
+      {
+        $set: {
+          status: "CLOSED",
+          open: false,
+          outcome: "SOLD",
+          closedByDealId: new Types.ObjectId(dealId),
+          closedAt,
+        },
+        $inc: { version: 1 },
+      }
+    );
+  }
+
   // RESERVED -> ACTIVE no anúncio da camisa, se houver; null quando não há anúncio reservado
   reactivateReserved(shirtId: string): Promise<Listing | null> {
     return this.compareAndSet(
