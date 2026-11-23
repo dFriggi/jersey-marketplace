@@ -20,4 +20,20 @@ export class ShirtRepository extends BaseRepository<ShirtDoc, ShirtSummary> {
       state: doc.state,
     };
   }
+
+  // ids das camisas com o time e o tamanho pedidos, sem diferenciar maiúsculas de minúsculas
+  async findIdsMatching(criteria: { team?: string; size?: string }): Promise<string[]> {
+    const found = await this.list({
+      ...(criteria.team ? { team: exactIgnoringCase(criteria.team) } : {}),
+      ...(criteria.size ? { size: exactIgnoringCase(criteria.size) } : {}),
+    });
+
+    return found.map((shirt) => shirt.id);
+  }
+}
+
+// "são paulo" encontra "São Paulo", mas não "São Paulo B"; os caracteres especiais do texto valem literalmente
+function exactIgnoringCase(value: string): RegExp {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${escaped}$`, "i");
 }

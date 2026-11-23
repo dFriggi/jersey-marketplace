@@ -23,6 +23,8 @@ export interface Listing {
   priceCents?: number;
   status: ListingStatus;
   open: boolean;
+  // como a camisa estava quando foi anunciada
+  snapshot: { condition: string; photos: string[] };
   createdAt: Date;
 }
 
@@ -31,4 +33,26 @@ export interface ActiveSaleListing {
   id: string;
   sellerId: string;
   priceCents: number;
+}
+
+// filtros da vitrine; o que vier vazio não filtra
+export interface ShowcaseQuery {
+  team?: string;
+  size?: string;
+  page: number;
+  pageSize: number;
+}
+
+// um item da vitrine: o anúncio de venda com o que o comprador precisa ver da camisa
+export interface ShowcaseItem {
+  id: string;
+  shirtId: string;
+  sellerId: string;
+  priceCents: number;
+  team: string;
+  season: string;
+  size: string;
+  condition: string;
+  photos: string[];
+  createdAt: Date;
 }
