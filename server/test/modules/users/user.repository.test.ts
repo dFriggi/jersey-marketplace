@@ -75,4 +75,29 @@ describe("UserRepository", () => {
     for (const result of rejected) expect(result.reason).toMatchObject({ code: "duplicate_email" });
     expect(await UserModel.countDocuments()).toBe(1);
   });
+
+  describe("findCredentialsByEmail", () => {
+    it("devolve só o id e o hash, para o login conferir a senha", async () => {
+      const user = await repository.create(aUser());
+
+      expect(await repository.findCredentialsByEmail("ana@email.com")).toEqual({
+        id: user.id,
+        passwordHash: "hash-da-senha",
+      });
+    });
+
+    it("acha o usuário com o email em letras maiúsculas e com espaços nas pontas", async () => {
+      const user = await repository.create(aUser());
+
+      const credentials = await repository.findCredentialsByEmail("  ANA@Email.com ");
+
+      expect(credentials?.id).toBe(user.id);
+    });
+
+    it("devolve null para um email inexistente", async () => {
+      await repository.create(aUser());
+
+      expect(await repository.findCredentialsByEmail("outra@email.com")).toBeNull();
+    });
+  });
 });
