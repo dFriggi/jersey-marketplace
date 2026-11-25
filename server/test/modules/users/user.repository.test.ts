@@ -21,6 +21,7 @@ describe("UserRepository", () => {
       name: "Ana",
       email: "ana@email.com",
       roles: ["USER"],
+      reputationScore: 100,
       createdAt: expect.any(Date),
     });
     expect(user).not.toHaveProperty("passwordHash");
@@ -98,6 +99,36 @@ describe("UserRepository", () => {
       await repository.create(aUser());
 
       expect(await repository.findCredentialsByEmail("outra@email.com")).toBeNull();
+    });
+  });
+
+  describe("addReputation", () => {
+    it("soma os pontos e devolve o usuário com a reputação nova", async () => {
+      const user = await repository.create(aUser());
+
+      const updated = await repository.addReputation(user.id, 5);
+
+      expect(updated?.reputationScore).toBe(105);
+      expect((await repository.findById(user.id))?.reputationScore).toBe(105);
+    });
+
+    it("com delta negativo, tira pontos", async () => {
+      const user = await repository.create(aUser());
+
+      expect((await repository.addReputation(user.id, -20))?.reputationScore).toBe(80);
+    });
+
+    it("chamadas seguidas acumulam", async () => {
+      const user = await repository.create(aUser());
+
+      await repository.addReputation(user.id, 5);
+      await repository.addReputation(user.id, 5);
+
+      expect((await repository.findById(user.id))?.reputationScore).toBe(110);
+    });
+
+    it.each(["000000000000000000000000", "abc"])("devolve null para o usuário %s, que não existe", async (id) => {
+      expect(await repository.addReputation(id, 5)).toBeNull();
     });
   });
 });

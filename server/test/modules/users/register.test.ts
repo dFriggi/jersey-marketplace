@@ -25,6 +25,7 @@ describe("POST /auth/register", () => {
       name: "Ana",
       email: "ana@email.com",
       roles: ["USER"],
+      reputationScore: 100,
       createdAt: expect.any(String),
     });
   });

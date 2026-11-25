@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { BaseRepository, type DatabaseDoc } from "../../core/repository/base.repository";
 import { UserModel, type UserDoc } from "./user.model";
 import type { User } from "./user.types";
@@ -8,7 +9,14 @@ export class UserRepository extends BaseRepository<UserDoc, User> {
   }
 
   protected toEntity(doc: DatabaseDoc<UserDoc>): User {
-    return { id: String(doc._id), name: doc.name, email: doc.email, roles: doc.roles, createdAt: doc.createdAt };
+    return {
+      id: String(doc._id),
+      name: doc.name,
+      email: doc.email,
+      roles: doc.roles,
+      reputationScore: doc.reputationScore,
+      createdAt: doc.createdAt,
+    };
   }
 
   create(data: { name: string; email: string; passwordHash: string }): Promise<User> {
@@ -24,5 +32,11 @@ export class UserRepository extends BaseRepository<UserDoc, User> {
       .lean<DatabaseDoc<Pick<UserDoc, "passwordHash">>>();
 
     return doc ? { id: String(doc._id), passwordHash: doc.passwordHash } : null;
+  }
+
+  async addReputation(userId: string, delta: number): Promise<User | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    return this.compareAndSet({ _id: new Types.ObjectId(userId) }, { $inc: { reputationScore: delta } });
   }
 }
