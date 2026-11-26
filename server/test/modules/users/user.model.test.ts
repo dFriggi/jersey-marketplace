@@ -19,7 +19,7 @@ describe("model de users", () => {
   it("um usuário novo tem o papel USER e as datas preenchidas", async () => {
     const user = await UserModel.create(aUser());
 
-    expect(user.toObject()).toMatchObject({ roles: ["USER"] });
+    expect(user.toObject()).toMatchObject({ roles: ["USER"], reputationScore: 100 });
     expect(user.createdAt).toBeInstanceOf(Date);
     expect(user.updatedAt).toBeInstanceOf(Date);
   });

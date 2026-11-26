@@ -33,3 +33,17 @@ export async function login(input: { email: string; password: string }): Promise
 export function getProfile(userId: string): Promise<User> {
   return users.findByIdOrFail(userId);
 }
+
+//outros modulos só podem saber nome e reputação de um usuário
+export interface PublicUser {
+  id: string;
+  name: string;
+  reputationScore: number;
+}
+
+// ao erro, retorna user_not_found (404)
+export async function getUser(userId: string): Promise<PublicUser> {
+  const { id, name, reputationScore } = await users.findByIdOrFail(userId);
+
+  return { id, name, reputationScore };
+}
